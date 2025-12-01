@@ -102,7 +102,8 @@ fn count_times_zero_is_visited_naive(
     zero_count
 }
 
-// Part 2. Slightly smarter version that only needs one iteration per input line.
+// Part 2. Slightly smarter version that only needs one iteration per input
+// line.
 fn count_times_zero_is_visited(start: i32, lines: impl Iterator<Item = Result<String>>) -> i32 {
     // Arrow always starts at 50.
     let mut pos = start;
@@ -117,38 +118,40 @@ fn count_times_zero_is_visited(start: i32, lines: impl Iterator<Item = Result<St
             continue;
         };
 
-        if pos + delta < 0 {
-            zero_count += i32::abs(pos + delta) / 100;
+        // New position, before we wrap in to within [0, 99].
+        let new_pos_raw = pos + delta;
+
+        // I think this can be cleaned up using some modular arithmetic rules,
+        // but I'm too tired to think
+        if new_pos_raw < 0 {
+            zero_count += i32::abs(new_pos_raw) / 100;
             if pos != 0 {
                 zero_count += 1;
             }
         } else if delta > 0 {
-            zero_count += (pos + delta) / 100;
-        } else if delta < 0 && pos + delta == 0 {
+            zero_count += new_pos_raw / 100;
+        } else if delta < 0 && new_pos_raw == 0 {
             zero_count += 1;
         }
 
-        pos = i32::rem_euclid(pos + delta, 100);
+        pos = i32::rem_euclid(new_pos_raw, 100);
     }
 
     zero_count
 }
 
-/// Parse one line of the puzzle's input. Expected format `[R|L]\d+`, no
-/// trailing new line.
+/// Parse one line of the puzzle's input. Lines are expected to match the regex:
+/// `[RL]\d+` (note there's no trailing new line)
 ///
 /// Returns a signed integer representing the rotation amount, that's negative
 /// for left rotations and positive for right rotations,.
 fn parse_line(line: &str) -> Option<i32> {
-    let bytes = line.as_bytes();
-
-    let sign = match bytes.first() {
-        Some(b'R') => 1,
-        Some(b'L') => -1,
+    let (sign, amount_str) = match line.split_at_checked(1) {
+        Some(("R", rest)) => (1, rest),
+        Some(("L", rest)) => (-1, rest),
         _ => return None,
     };
 
-    let amount_str = str::from_utf8(&bytes[1..]).unwrap();
     let absolute_amount = i32::from_str_radix(amount_str, 10).unwrap();
 
     Some(sign * absolute_amount)
