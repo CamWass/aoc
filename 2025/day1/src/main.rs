@@ -51,18 +51,10 @@ fn count_rotations_that_end_on_zero(
 
     for line in lines {
         let line = line.unwrap();
-        let bytes = line.as_bytes();
 
-        let sign = match bytes.first() {
-            Some(b'R') => 1,
-            Some(b'L') => -1,
-            _ => continue,
+        let Some(delta) = parse_line(&line) else {
+            continue;
         };
-
-        let amount_str = str::from_utf8(&bytes[1..]).unwrap();
-        let absolute_amount = i32::from_str_radix(amount_str, 10).unwrap();
-
-        let delta = sign * absolute_amount;
 
         pos = i32::rem_euclid(pos + delta, 100);
 
@@ -86,22 +78,16 @@ fn count_times_zero_is_visited_naive(
 
     for line in lines {
         let line = line.unwrap();
-        let bytes = line.as_bytes();
 
-        let sign = match bytes.first() {
-            Some(b'R') => 1,
-            Some(b'L') => -1,
-            _ => continue,
+        let Some(delta) = parse_line(&line) else {
+            continue;
         };
 
-        let amount_str = str::from_utf8(&bytes[1..]).unwrap();
-        let absolute_amount = i32::from_str_radix(amount_str, 10).unwrap();
-
-        for _ in 0..absolute_amount {
-            if sign == -1 {
+        for _ in 0..i32::abs(delta) {
+            if delta < 0 {
                 pos -= 1;
             }
-            if sign == 1 {
+            if delta > 0 {
                 pos += 1
             }
 
@@ -126,18 +112,10 @@ fn count_times_zero_is_visited(start: i32, lines: impl Iterator<Item = Result<St
 
     for line in lines {
         let line = line.unwrap();
-        let bytes = line.as_bytes();
 
-        let sign = match bytes.first() {
-            Some(b'R') => 1,
-            Some(b'L') => -1,
-            _ => continue,
+        let Some(delta) = parse_line(&line) else {
+            continue;
         };
-
-        let amount_str = str::from_utf8(&bytes[1..]).unwrap();
-        let absolute_amount = i32::from_str_radix(amount_str, 10).unwrap();
-
-        let delta = sign * absolute_amount;
 
         if pos + delta < 0 {
             zero_count += i32::abs(pos + delta) / 100;
@@ -154,6 +132,26 @@ fn count_times_zero_is_visited(start: i32, lines: impl Iterator<Item = Result<St
     }
 
     zero_count
+}
+
+/// Parse one line of the puzzle's input. Expected format `[R|L]\d+`, no
+/// trailing new line.
+///
+/// Returns a signed integer representing the rotation amount, that's negative
+/// for left rotations and positive for right rotations,.
+fn parse_line(line: &str) -> Option<i32> {
+    let bytes = line.as_bytes();
+
+    let sign = match bytes.first() {
+        Some(b'R') => 1,
+        Some(b'L') => -1,
+        _ => return None,
+    };
+
+    let amount_str = str::from_utf8(&bytes[1..]).unwrap();
+    let absolute_amount = i32::from_str_radix(amount_str, 10).unwrap();
+
+    Some(sign * absolute_amount)
 }
 
 #[cfg(test)]
